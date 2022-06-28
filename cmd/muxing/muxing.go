@@ -39,7 +39,7 @@ func Start(host string, port int) {
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-		r.URL.Path = strings.ToLower(r.URL.Path)
+		// r.URL.Path = strings.ToLower(r.URL.Path)
 		log.Println(r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
@@ -78,7 +78,7 @@ func HeaderHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
-	w.Header().Set("a+b", fmt.Sprintf("\"%v\"", a+b))
+	w.Header().Set("a+b", fmt.Sprintf("%v", a+b))
 	w.WriteHeader(http.StatusOK)
 }
 
