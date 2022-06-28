@@ -24,10 +24,10 @@ func Start(host string, port int) {
 	router := mux.NewRouter()
 
 	// Register routes (endpoints)
-	router.HandleFunc("/name/{PARAM}", HomeHandler).Methods(http.MethodGet)
+	router.HandleFunc("/name/{PARAM}", NameHandler).Methods(http.MethodGet)
 	router.HandleFunc("/bad", BadHandler).Methods(http.MethodGet)
 	router.HandleFunc("/data", DataHandler).Methods(http.MethodPost)
-	router.HandleFunc("/headers", HeaderHandler).Methods(http.MethodPost)
+	router.HandleFunc("/headers", HeadersHandler).Methods(http.MethodPost)
 
 	log.Println(fmt.Printf("Starting API server on %s:%d\n", host, port))
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), loggingMiddleware(router)); err != nil {
@@ -35,7 +35,7 @@ func Start(host string, port int) {
 	}
 }
 
-// Logging incomming requests, male lower case and remove trailing slashes
+// Logging incomming requests and remove trailing slashes
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
@@ -46,10 +46,10 @@ func loggingMiddleware(next http.Handler) http.Handler {
 }
 
 // Return home page
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
+func NameHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("Hello, %v!", params["PARAM"])))
+	w.WriteHeader(http.StatusOK)
 }
 
 // Return bad request
@@ -59,24 +59,33 @@ func BadHandler(w http.ResponseWriter, r *http.Request) {
 
 // Return in body posted content from request body
 func DataHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
 	w.Write([]byte("I got message:\n"))
 	w.Write(body)
+	w.WriteHeader(http.StatusOK)
 }
 
 // Return in headers posted content from request headers
-func HeaderHandler(w http.ResponseWriter, r *http.Request) {
+func HeadersHandler(w http.ResponseWriter, r *http.Request) {
 	a, err := strconv.Atoi(r.Header.Get("a"))
 	if err != nil {
 		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
 	b, err := strconv.Atoi(r.Header.Get("b"))
 	if err != nil {
 		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
 	w.Header().Set("a+b", fmt.Sprintf("%v", a+b))
 	w.WriteHeader(http.StatusOK)
